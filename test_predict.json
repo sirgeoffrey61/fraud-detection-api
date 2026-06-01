@@ -1,0 +1,11 @@
+{
+  "Claim_Amount": 15000,
+  "Patient_Age": 65,
+  "Patient_Gender": "M",
+  "Provider_Type": "Specialist",
+  "Provider_Specialty": "Cardiology",
+  "Admission_Type": "Emergency",
+  "Service_Type": "Inpatient",
+  "Provider_Patient_Distance_Miles": 120.5,
+  "Claim_Submitted_Late": 1
+}

@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fraud Detection — Live Demo</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f4f0;color:#1a1a1a;padding:2rem 1rem}
+.container{max-width:680px;margin:0 auto}
+.badge{display:inline-flex;align-items:center;gap:6px;background:#fff;border:1px solid #e0ddd6;border-radius:20px;padding:4px 12px;font-size:12px;color:#666;margin-bottom:1rem}
+h1{font-size:26px;font-weight:500;margin-bottom:.4rem}
+.subtitle{font-size:14px;color:#666;margin-bottom:1.5rem;line-height:1.6}
+.form-card{background:#fff;border:1px solid #e0ddd6;border-radius:12px;padding:1.25rem;margin-bottom:1rem}
+.section-label{font-size:11px;font-weight:600;color:#999;text-transform:uppercase;letter-spacing:.08em;margin-bottom:1rem}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+.field{display:flex;flex-direction:column;gap:5px}
+.field label{font-size:13px;color:#555}
+.field input,.field select{font-size:14px;padding:8px 10px;border:1px solid #ddd;border-radius:8px;background:#fff;color:#1a1a1a;width:100%}
+.field input:focus,.field select:focus{outline:none;border-color:#999}
+.submit-btn{width:100%;padding:13px;font-size:15px;font-weight:500;background:#1a1a1a;color:#fff;border:none;border-radius:8px;cursor:pointer;margin-top:.5rem;display:flex;align-items:center;justify-content:center;gap:8px;transition:opacity .15s}
+.submit-btn:hover{opacity:.85}
+.submit-btn:disabled{opacity:.4;cursor:not-allowed}
+.result{border-radius:12px;padding:1.25rem;margin-top:1rem;display:none}
+.result.fraud{background:#FCEBEB;border:1px solid #F09595}
+.result.not-fraud{background:#EAF3DE;border:1px solid #97C459}
+.result-header{display:flex;align-items:center;gap:12px;margin-bottom:1rem}
+.verdict-icon{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+.fraud .verdict-icon{background:#F7C1C1}
+.not-fraud .verdict-icon{background:#C0DD97}
+.verdict-label{font-size:22px;font-weight:500}
+.fraud .verdict-label{color:#A32D2D}
+.not-fraud .verdict-label{color:#3B6D11}
+.verdict-sub{font-size:13px;margin-top:2px}
+.fraud .verdict-sub{color:#993C1D}
+.not-fraud .verdict-sub{color:#27500A}
+.metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:1rem}
+.metric{background:#fff;border-radius:8px;padding:.75rem;text-align:center;border:1px solid #e0ddd6}
+.metric-val{font-size:18px;font-weight:500}
+.metric-lbl{font-size:11px;color:#888;margin-top:2px}
+.prob-bar{margin-top:1rem}
+.prob-bar-label{display:flex;justify-content:space-between;font-size:13px;color:#666;margin-bottom:6px}
+.bar-track{height:8px;background:#e8e6e0;border-radius:4px;overflow:hidden}
+.bar-fill{height:100%;border-radius:4px;transition:width .6s ease}
+.fraud .bar-fill{background:#E24B4A}
+.not-fraud .bar-fill{background:#639922}
+.api-note{font-size:12px;color:#999;text-align:center;margin-top:.75rem}
+.spinner{width:18px;height:18px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;display:none}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="badge">&#x1F6E1; Fraud Detection API — Live Demo</div>
+  <h1>Is this claim fraudulent?</h1>
+  <p class="subtitle">Fill in the claim details below. The model scores it in real time using a tuned RandomForest classifier (threshold 0.2725, F1 0.713).</p>
+
+  <div class="form-card">
+    <div class="section-label">Patient &amp; claim</div>
+    <div class="grid-3" style="margin-bottom:12px">
+      <div class="field"><label>Claim amount</label><input type="number" id="claim_amount" value="15000" min="0"></div>
+      <div class="field"><label>Patient age</label><input type="number" id="patient_age" value="65" min="1" max="120"></div>
+      <div class="field"><label>Gender</label><select id="patient_gender"><option value="M">Male</option><option value="F">Female</option></select></div>
+    </div>
+    <div class="grid-2" style="margin-bottom:12px">
+      <div class="field"><label>Admission type</label><select id="admission_type"><option>Emergency</option><option>Routine</option><option>Elective</option></select></div>
+      <div class="field"><label>Service type</label><select id="service_type"><option>Inpatient</option><option>Outpatient</option><option>Day Care</option></select></div>
+    </div>
+    <div class="grid-2">
+      <div class="field"><label>Submitted late?</label><select id="claim_late"><option value="1">Yes</option><option value="0">No</option></select></div>
+      <div class="field"><label>Provider distance (miles)</label><input type="number" id="distance" value="120" min="0"></div>
+    </div>
+  </div>
+
+  <div class="form-card">
+    <div class="section-label">Provider</div>
+    <div class="grid-2">
+      <div class="field"><label>Provider type</label><select id="provider_type"><option>Specialist</option><option>General</option><option>Hospital</option><option>Clinic</option></select></div>
+      <div class="field"><label>Specialty</label><select id="provider_specialty"><option>Cardiology</option><option>GP</option><option>Orthopedics</option><option>Neurology</option><option>Oncology</option></select></div>
+    </div>
+  </div>
+
+  <button class="submit-btn" id="predict-btn" onclick="runPrediction()">
+    <span id="btn-text">Run fraud check</span>
+    <div class="spinner" id="spinner"></div>
+  </button>
+
+  <div class="result" id="result-box">
+    <div class="result-header">
+      <div class="verdict-icon" id="verdict-icon"></div>
+      <div>
+        <div class="verdict-label" id="verdict-label"></div>
+        <div class="verdict-sub" id="verdict-sub"></div>
+      </div>
+    </div>
+    <div class="prob-bar">
+      <div class="prob-bar-label"><span>Fraud probability</span><span id="prob-pct"></span></div>
+      <div class="bar-track"><div class="bar-fill" id="bar-fill" style="width:0%"></div></div>
+    </div>
+    <div class="metrics">
+      <div class="metric"><div class="metric-val" id="m-prob"></div><div class="metric-lbl">Probability</div></div>
+      <div class="metric"><div class="metric-val" id="m-conf"></div><div class="metric-lbl">Confidence</div></div>
+      <div class="metric"><div class="metric-val" id="m-thresh"></div><div class="metric-lbl">Threshold</div></div>
+    </div>
+    <p class="api-note">Response from POST /predict — FastAPI + RandomForest</p>
+  </div>
+</div>
+
+<script>
+async function runPrediction(){
+  const btn=document.getElementById('predict-btn');
+  const spinner=document.getElementById('spinner');
+  const btnText=document.getElementById('btn-text');
+  btn.disabled=true;
+  spinner.style.display='block';
+  btnText.textContent='Checking...';
+  const payload={
+    Claim_Amount:parseFloat(document.getElementById('claim_amount').value)||15000,
+    Patient_Age:parseInt(document.getElementById('patient_age').value)||65,
+    Patient_Gender:document.getElementById('patient_gender').value,
+    Provider_Type:document.getElementById('provider_type').value,
+    Provider_Specialty:document.getElementById('provider_specialty').value,
+    Admission_Type:document.getElementById('admission_type').value,
+    Service_Type:document.getElementById('service_type').value,
+    Provider_Patient_Distance_Miles:parseFloat(document.getElementById('distance').value)||5,
+    Claim_Submitted_Late:parseInt(document.getElementById('claim_late').value)
+  };
+  try{
+    const res=await fetch('http://127.0.0.1:8000/predict',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(payload)
+    });
+    if(!res.ok) throw new Error('API error');
+    const data=await res.json();
+    showResult(data);
+  } catch(e){
+    showMockResult(payload);
+  } finally{
+    btn.disabled=false;
+    spinner.style.display='none';
+    btnText.textContent='Run fraud check';
+  }
+}
+function showResult(data){
+  const box=document.getElementById('result-box');
+  const isFraud=data.label==='Fraud';
+  box.className='result '+(isFraud?'fraud':'not-fraud');
+  box.style.display='block';
+  document.getElementById('verdict-icon').textContent=isFraud?'⚠':'✓';
+  document.getElementById('verdict-label').textContent=isFraud?'Fraud detected':'Legitimate claim';
+  document.getElementById('verdict-sub').textContent=isFraud?'This claim shows fraud indicators.':'No fraud indicators found.';
+  const pct=(data.probability*100).toFixed(1)+'%';
+  document.getElementById('prob-pct').textContent=pct;
+  document.getElementById('bar-fill').style.width=pct;
+  document.getElementById('m-prob').textContent=pct;
+  document.getElementById('m-conf').textContent=data.confidence.charAt(0).toUpperCase()+data.confidence.slice(1);
+  document.getElementById('m-thresh').textContent=(data.threshold_used*100).toFixed(1)+'%';
+}
+function showMockResult(p){
+  const score=Math.min(0.95,Math.max(0.02,
+    (p.Claim_Submitted_Late*0.25)+
+    (p.Provider_Patient_Distance_Miles>100?0.2:0.02)+
+    (p.Admission_Type==='Emergency'?0.15:0.03)+
+    (p.Claim_Amount>20000?0.18:0.04)+
+    Math.random()*0.08
+  ));
+  const conf=score>0.6?'High':score>0.35?'Medium':'Low';
+  showResult({label:score>=0.2725?'Fraud':'Not Fraud',probability:score,confidence:conf,threshold_used:0.2725});
+  document.querySelector('.api-note').textContent='API offline — showing simulated result';
+}
+</script>
+</body>
+</html>
