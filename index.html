@@ -22,6 +22,9 @@ h1{font-size:26px;font-weight:500;margin-bottom:.4rem}
 .submit-btn{width:100%;padding:13px;font-size:15px;font-weight:500;background:#1a1a1a;color:#fff;border:none;border-radius:8px;cursor:pointer;margin-top:.5rem;display:flex;align-items:center;justify-content:center;gap:8px;transition:opacity .15s}
 .submit-btn:hover{opacity:.85}
 .submit-btn:disabled{opacity:.4;cursor:not-allowed}
+.example-btns{display:flex;gap:10px;margin-bottom:.75rem}
+.secondary-btn{flex:1;padding:10px;font-size:13px;font-weight:500;background:#fff;color:#1a1a1a;border:1px solid #ddd;border-radius:8px;cursor:pointer;transition:background .15s}
+.secondary-btn:hover{background:#f0efeb}
 .result{border-radius:12px;padding:1.25rem;margin-top:1rem;display:none}
 .result.fraud{background:#FCEBEB;border:1px solid #F09595}
 .result.not-fraud{background:#EAF3DE;border:1px solid #97C459}
@@ -64,8 +67,8 @@ h1{font-size:26px;font-weight:500;margin-bottom:.4rem}
       <div class="field"><label>Gender</label><select id="patient_gender"><option value="M">Male</option><option value="F">Female</option></select></div>
     </div>
     <div class="grid-2" style="margin-bottom:12px">
-      <div class="field"><label>Admission type</label><select id="admission_type"><option>Emergency</option><option>Routine</option><option>Elective</option></select></div>
-      <div class="field"><label>Service type</label><select id="service_type"><option>Inpatient</option><option>Outpatient</option><option>Day Care</option></select></div>
+      <div class="field"><label>Admission type</label><select id="admission_type"><option>Emergency</option><option>Routine</option><option>Elective</option><option>Trauma</option><option>Newborn</option></select></div>
+      <div class="field"><label>Service type</label><select id="service_type"><option>Inpatient</option><option>Outpatient</option><option>Day Care</option><option>Ambulance</option><option>Laboratory</option></select></div>
     </div>
     <div class="grid-2">
       <div class="field"><label>Submitted late?</label><select id="claim_late"><option value="1">Yes</option><option value="0">No</option></select></div>
@@ -76,7 +79,7 @@ h1{font-size:26px;font-weight:500;margin-bottom:.4rem}
   <div class="form-card">
     <div class="section-label">Provider</div>
     <div class="grid-2">
-      <div class="field"><label>Provider type</label><select id="provider_type"><option>Specialist</option><option>General</option><option>Hospital</option><option>Clinic</option></select></div>
+      <div class="field"><label>Provider type</label><select id="provider_type"><option>Specialist</option><option>Specialist Office</option><option>General</option><option>Hospital</option><option>Clinic</option></select></div>
       <div class="field"><label>Specialty</label><select id="provider_specialty"><option>Cardiology</option><option>GP</option><option>Orthopedics</option><option>Neurology</option><option>Oncology</option></select></div>
     </div>
   </div>
@@ -99,6 +102,11 @@ h1{font-size:26px;font-weight:500;margin-bottom:.4rem}
       <div class="field"><label>Deductible amount</label><input type="number" id="deductible_amount" value="1200" min="0" step="0.01"></div>
       <div class="field"><label>Co-pay amount</label><input type="number" id="copay_amount" value="200" min="0" step="0.01"></div>
     </div>
+  </div>
+
+  <div class="example-btns">
+    <button type="button" class="secondary-btn" onclick="loadFraudExample()">Load fraud example</button>
+    <button type="button" class="secondary-btn" onclick="loadLegitimateExample()">Load legitimate example</button>
   </div>
 
   <button class="submit-btn" id="predict-btn" onclick="runPrediction()">
@@ -128,6 +136,58 @@ h1{font-size:26px;font-weight:500;margin-bottom:.4rem}
 </div>
 
 <script>
+function setField(id,value){
+  const el=document.getElementById(id);
+  if(el) el.value=value;
+}
+function setSelect(id,value){
+  const el=document.getElementById(id);
+  if(!el) return;
+  el.value=value;
+  if(el.value!==value){
+    for(const opt of el.options){
+      if(opt.text===value||opt.value===value){el.value=opt.value;break;}
+    }
+  }
+}
+function loadFraudExample(){
+  setField('claim_amount',870356);
+  setField('patient_age',24);
+  setSelect('patient_gender','M');
+  setSelect('admission_type','Trauma');
+  setSelect('service_type','Ambulance');
+  setSelect('claim_late','1');
+  setField('distance',63);
+  setSelect('provider_type','Specialist Office');
+  setSelect('provider_specialty','Cardiology');
+  setField('number_of_procedures',10);
+  setField('length_of_stay_days',0);
+  setField('previous_claims_patient',0);
+  setField('previous_claims_provider',14);
+  setField('claim_service_gap_days',58);
+  setField('days_to_policy_expiry',1120);
+  setField('deductible_amount',2775);
+  setField('copay_amount',545);
+}
+function loadLegitimateExample(){
+  setField('claim_amount',800);
+  setField('patient_age',28);
+  setSelect('patient_gender','F');
+  setSelect('admission_type','Routine');
+  setSelect('service_type','Outpatient');
+  setSelect('claim_late','0');
+  setField('distance',3);
+  setSelect('provider_type','General');
+  setSelect('provider_specialty','GP');
+  setField('number_of_procedures',2);
+  setField('length_of_stay_days',5);
+  setField('previous_claims_patient',1);
+  setField('previous_claims_provider',4);
+  setField('claim_service_gap_days',12);
+  setField('days_to_policy_expiry',50);
+  setField('deductible_amount',1200);
+  setField('copay_amount',200);
+}
 async function runPrediction(){
   const btn=document.getElementById('predict-btn');
   const spinner=document.getElementById('spinner');
