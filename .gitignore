@@ -1,4 +1,6 @@
+# Ignore joblib binaries except the LFS-tracked production model
 *.joblib
+!artifacts/fraud_pipeline.joblib
 __pycache__/
 *.pyc
 .env

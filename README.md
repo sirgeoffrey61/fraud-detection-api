@@ -30,7 +30,9 @@ App/
 ├── Dockerfile
 ├── docker-compose.yml
 ├── requirements.txt
-└── test_predict.json
+├── render.yaml
+├── test_predict.json
+└── index.html
 ```
 
 ## Model Performance
@@ -92,6 +94,71 @@ curl.exe -X POST http://127.0.0.1:8000/predict -H "Content-Type: application/jso
 | GET | `/` | Health ping |
 | GET | `/health` | Model name and tuned threshold |
 | POST | `/predict` | Fraud prediction with confidence score |
+
+## Deploy to Render
+
+This repo includes `render.yaml` for a [Render](https://render.com) web service named `fraud-detection-api`.
+
+### Artifact requirement
+
+The API loads these files at startup from `artifacts/`:
+
+| File | In plain Git? | How to ship |
+|------|----------------|-------------|
+| `model_metadata.json` | Yes | Committed normally |
+| `fraud_pipeline.joblib` | **No** (~125 MB) | **Git LFS** (recommended) or download at build time |
+
+`*.joblib` is listed in `.gitignore` except `artifacts/fraud_pipeline.joblib`, which is tracked via Git LFS (see `.gitattributes`).
+
+### Option A — Git LFS (recommended)
+
+1. Install [Git LFS](https://git-lfs.github.com/) locally.
+2. From `App/`:
+
+```powershell
+git lfs install
+git lfs track "artifacts/fraud_pipeline.joblib"
+git add .gitattributes artifacts/fraud_pipeline.joblib
+git commit -m "Track model pipeline with Git LFS"
+git push
+```
+
+3. On GitHub: **Settings → Git LFS** — ensure LFS is enabled for the repository.
+4. In Render: **New → Blueprint** → connect `fraud-detection-api` → apply `render.yaml`.
+
+The build runs `git lfs pull` so `fraud_pipeline.joblib` is present before the app starts.
+
+### Option B — Download at build time
+
+If you host `fraud_pipeline.joblib` at a stable URL (S3, GitHub Release, etc.):
+
+1. In Render → your service → **Environment**, add:
+
+   `MODEL_JOBLIB_URL` = `https://your-url/fraud_pipeline.joblib`
+
+2. Redeploy. `scripts/fetch_model.sh` downloads the file when it is missing and the variable is set.
+
+`model_metadata.json` must still be in the repo (or copied into `artifacts/` another way).
+
+### Render service settings (from `render.yaml`)
+
+- **Start:** `uvicorn api.main:app --host 0.0.0.0 --port $PORT`
+- **Health check:** `GET /health`
+
+After deploy:
+
+```powershell
+curl.exe https://YOUR-SERVICE.onrender.com/health
+```
+
+### Docker (unchanged)
+
+Local Docker still mounts host artifacts; no LFS required on your machine if the file already exists under `App/artifacts/`:
+
+```yaml
+volumes:
+  - ./artifacts:/app/artifacts
+```
 
 ## Running Tests
 
