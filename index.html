@@ -81,6 +81,26 @@ h1{font-size:26px;font-weight:500;margin-bottom:.4rem}
     </div>
   </div>
 
+  <div class="form-card">
+    <div class="section-label">Claim history &amp; financials</div>
+    <div class="grid-2" style="margin-bottom:12px">
+      <div class="field"><label>Number of procedures</label><input type="number" id="number_of_procedures" value="2" min="1"></div>
+      <div class="field"><label>Length of stay (days)</label><input type="number" id="length_of_stay_days" value="60" min="0"></div>
+    </div>
+    <div class="grid-2" style="margin-bottom:12px">
+      <div class="field"><label>Previous claims (patient)</label><input type="number" id="previous_claims_patient" value="1" min="0"></div>
+      <div class="field"><label>Previous claims (provider)</label><input type="number" id="previous_claims_provider" value="4" min="0"></div>
+    </div>
+    <div class="grid-2" style="margin-bottom:12px">
+      <div class="field"><label>Claim–service gap (days)</label><input type="number" id="claim_service_gap_days" value="12" min="0"></div>
+      <div class="field"><label>Days to policy expiry</label><input type="number" id="days_to_policy_expiry" value="50" min="0"></div>
+    </div>
+    <div class="grid-2">
+      <div class="field"><label>Deductible amount</label><input type="number" id="deductible_amount" value="1200" min="0" step="0.01"></div>
+      <div class="field"><label>Co-pay amount</label><input type="number" id="copay_amount" value="200" min="0" step="0.01"></div>
+    </div>
+  </div>
+
   <button class="submit-btn" id="predict-btn" onclick="runPrediction()">
     <span id="btn-text">Run fraud check</span>
     <div class="spinner" id="spinner"></div>
@@ -124,7 +144,15 @@ async function runPrediction(){
     Admission_Type:document.getElementById('admission_type').value,
     Service_Type:document.getElementById('service_type').value,
     Provider_Patient_Distance_Miles:parseFloat(document.getElementById('distance').value)||5,
-    Claim_Submitted_Late:parseInt(document.getElementById('claim_late').value)
+    Claim_Submitted_Late:parseInt(document.getElementById('claim_late').value),
+    Number_of_Procedures:parseInt(document.getElementById('number_of_procedures').value)||2,
+    Number_of_Previous_Claims_Patient:parseInt(document.getElementById('previous_claims_patient').value)||1,
+    Number_of_Previous_Claims_Provider:parseInt(document.getElementById('previous_claims_provider').value)||4,
+    Length_of_Stay_Days:parseInt(document.getElementById('length_of_stay_days').value)||60,
+    Claim_Service_Gap_Days:parseInt(document.getElementById('claim_service_gap_days').value)||12,
+    Days_To_Policy_Expiry:parseInt(document.getElementById('days_to_policy_expiry').value)||50,
+    Deductible_Amount:parseFloat(document.getElementById('deductible_amount').value)||1200,
+    CoPay_Amount:parseFloat(document.getElementById('copay_amount').value)||200
   };
   try{
     const res=await fetch('https://fraud-detection-api-eoje.onrender.com/predict',{
