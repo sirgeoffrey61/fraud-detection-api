@@ -216,6 +216,24 @@ Open **http://127.0.0.1:5000** to:
 
 Tracking metadata is in `./mlflow.db`; run artifacts are under `./mlruns/` (both gitignored).
 
+## MLflow Experiment Results
+
+### Comparing 6 Runs — fraud-detection experiment
+![Model Comparison](docs/MLflow_1.png)
+
+### Model Metrics Comparison
+| Metric | LogisticRegression | GradientBoosting | RandomForest (Best) |
+|--------|-------------------|------------------|---------------------|
+| AUC-ROC | 0.810 | 0.874 | **0.876** |
+| Precision | 0.499 | 0.867 | **0.907** |
+| PR-AUC | 0.647 | 0.791 | **0.804** |
+| F1 | 0.591 | 0.666 | **0.668** |
+| CV-F1 | 0.582 | 0.672 | **0.676** |
+
+![Metrics Table](docs/mlflow_2.png)
+
+> Best model: **RandomForest** — registered as `fraud-detection-model` in MLflow Model Registry (Staging)
+
 ## Running Tests
 
 ```powershell
