@@ -160,6 +160,62 @@ volumes:
   - ./artifacts:/app/artifacts
 ```
 
+## MLflow Experiment Tracking
+
+Training is tracked with [MLflow](https://mlflow.org) from the project root (`E:\Datasets\Fraud Detection\`), alongside the existing notebook export to `App/artifacts/`.
+
+### What gets logged
+
+| Item | Details |
+|------|---------|
+| **Experiment** | `fraud-detection` |
+| **Runs** | One per model (LogisticRegression, RandomForest, GradientBoosting) |
+| **Parameters** | Estimator hyperparameters + pipeline settings (CV folds, feature selector, etc.) |
+| **Metrics** | `accuracy`, `precision`, `recall`, `f1`, `auc_roc`, `pr_auc`, `cv_f1` |
+| **Artifacts** | Full sklearn `Pipeline` per run |
+| **Registry** | Best model registered as `fraud-detection-model` |
+
+> Compatibility note: Instead of relying on `model_info.registered_model_version`, the training flow resolves the registered version via `MlflowClient` using the active `run_id` (with a latest-version fallback), then transitions that resolved version to Staging.
+
+### Train and register (CLI)
+
+From the **project root** (where `synthetic_health_claims.csv` and `mlflow_tracking.py` live):
+
+```powershell
+cd "E:\Datasets\Fraud Detection"
+pip install -r App\requirements.txt
+python train_fraud_model_mlflow.py
+```
+
+- Registers the best model (highest test F1) in the Model Registry.
+- Moves that version to **Staging** automatically.
+- Add `--production` to also promote the same version to **Production**:
+
+```powershell
+python train_fraud_model_mlflow.py --production
+```
+
+### Notebook
+
+After the model comparison cell in `fraud_modeling.ipynb`, run section **6b) MLflow Experiment Tracking** — it logs the already-fitted `fitted_pipelines` without retraining.
+
+### Launch MLflow UI
+
+From the project root:
+
+```powershell
+cd "E:\Datasets\Fraud Detection"
+mlflow ui --backend-store-uri sqlite:///mlflow.db
+```
+
+Open **http://127.0.0.1:5000** to:
+
+- Compare runs and metrics charts
+- Open the **Models** tab → `fraud-detection-model` → view **Staging** / **Production** versions
+- Download logged pipeline artifacts
+
+Tracking metadata is in `./mlflow.db`; run artifacts are under `./mlruns/` (both gitignored).
+
 ## Running Tests
 
 ```powershell
