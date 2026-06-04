@@ -1,5 +1,13 @@
 # Fraud Detection API
 
+## 🚀 Live Deployment
+
+**Azure Container Instances (Microsoft Azure)**
+- Live API: http://fraud-detection-navi.eastus.azurecontainer.io:8000
+- Health check: http://fraud-detection-navi.eastus.azurecontainer.io:8000/health
+- Deployed via: Azure Container Registry + Azure Container Instances
+- Infrastructure: Docker container on Linux, 1 vCPU, 1.5GB RAM
+
 Healthcare claims fraud detection served as a FastAPI REST API, backed by a scikit-learn Random Forest model and packaged with Docker.
 
 ## What This Project Does
